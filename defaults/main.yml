@@ -1,2 +1,11 @@
 ---
 # Role default lower priority variables
+
+# Path to the project to fork
+
+gitlab_fork_project_path:
+
+# Allow duplicated forks. If no, the project will not be forked if a fork
+# already exists
+
+gitlab_fork_allow_duplicated: no
