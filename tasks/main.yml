@@ -21,7 +21,7 @@
       register: gitlab_fork_get_user_projects_result
 
     - name: Fork project in gitlab server
-      shell: >-
+      command: >-
         gitlab
         {{ gitlab_fork_config_file_option }}
         {{ gitlab_fork_section_option }}
