@@ -6,6 +6,10 @@ This is an [Ansible](http://www.ansible.com) role to fork a GitLab project.
 
 A list of all the default variables for this role is available in `defaults/main.yml`.
 
+The role setups the following facts:
+
+- `gitlab_fork_fact`: dictionary with the result of the fork
+
 ## Example Playbook
 
 This is an example playbook:
