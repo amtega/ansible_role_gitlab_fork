@@ -1,6 +1,17 @@
 ---
 # Role tasks
 
+- include_role:
+    name: amtega.check_platform
+  vars:
+    check_platform_distributions:
+      centos: 7
+      fedora: 29
+      rhel: 7
+
+- include_role:
+    name: amtega.gitlab_cli
+
 - block:
     - name: Load user info from gitlab server
       command: >-
