@@ -25,14 +25,9 @@ galaxy_info:
 
 dependencies:
   - role: amtega.check_platform
-    vars:
-      check_platform_distributions:
-        centos: 7
-        fedora: 29
-        rhel: 7
     tags:
-      - role::gitlab_fork
+      - never
 
   - role: amtega.gitlab_cli
     tags:
-      - role::gitlab_fork
+      - never
