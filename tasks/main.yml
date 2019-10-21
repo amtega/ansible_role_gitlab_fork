@@ -15,7 +15,7 @@
 - block:
     - name: Load user info from gitlab server
       command: >-
-        gitlab
+        {{ gitlab_cli_path | default("gitlab") }}
         {{ gitlab_fork_config_file_option }}
         {{ gitlab_fork_section_option }}
         -o yaml current-user get
@@ -24,7 +24,7 @@
 
     - name: Load projects info from gitlab server
       command: >-
-        gitlab
+        {{ gitlab_cli_path | default("gitlab") }}
         {{ gitlab_fork_config_file_option }}
         {{ gitlab_fork_section_option }}
         -o yaml project list --all --owned true
@@ -33,7 +33,7 @@
 
     - name: Fork project in gitlab server
       command: >-
-        gitlab
+        {{ gitlab_cli_path | default("gitlab") }}
         {{ gitlab_fork_config_file_option }}
         {{ gitlab_fork_section_option }}
         -o yaml
