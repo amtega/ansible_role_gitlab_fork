@@ -1,63 +1,118 @@
 ---
 # Role tasks
 
-- include_role:
-    name: amtega.check_platform
-  vars:
-    check_platform_distributions:
-      centos: 7
-      fedora: 29
-      rhel: 7
-
-- include_role:
-    name: amtega.gitlab_cli
-
 - block:
     - name: Load user info from gitlab server
-      command: >-
-        {{ gitlab_cli_path | default("gitlab") }}
-        {{ gitlab_fork_config_file_option }}
-        {{ gitlab_fork_section_option }}
-        -o yaml current-user get
-      changed_when: false
+      uri:
+        url: "{{ gitlab_fork_api_url }}/user"
+        method: GET
+        headers:
+          "Private-Token": "{{ gitlab_fork_token }}"
+        return_content: yes
+        validate_certs: "{{ gitlab_fork_validate_certs }}"
       register: gitlab_fork_user_result
 
-    - name: Load projects info from gitlab server
-      command: >-
-        {{ gitlab_cli_path | default("gitlab") }}
-        {{ gitlab_fork_config_file_option }}
-        {{ gitlab_fork_section_option }}
-        -o yaml project list --all --owned true
-      changed_when: false
+    - name: Get number of user projects pages
+      uri:
+        url: "{{ gitlab_fork_api_url }}/projects?owned=true&per_page=100"
+        method: GET
+        headers:
+          "Private-Token": "{{ gitlab_fork_token }}"
+        return_content: yes
+        validate_certs: "{{ gitlab_fork_validate_certs }}"
+      register: gitlab_fork_get_projects_pages_result
+
+    - name: Load user projects info
+      uri:
+        url: >-
+          {{ gitlab_fork_api_url
+             + "/projects?owned=true"
+             + "&page=" + gitlab_fork_page_index | string
+             + "&per_page=" + gitlab_fork_per_page | string }}
+        method: GET
+        headers:
+          "Private-Token": "{{ gitlab_fork_token }}"
+        return_content: yes
+        validate_certs: "{{ gitlab_fork_validate_certs }}"
+      loop: "{{ range(gitlab_fork_total_pages | int) | list }}"
+      loop_control:
+        index_var: gitlab_fork_page_index
+        extended: yes
+        label: >-
+          page {{ gitlab_fork_page_index + 1 }} / {{ ansible_loop.length }}
       register: gitlab_fork_get_user_projects_result
 
     - name: Fork project in gitlab server
-      command: >-
-        {{ gitlab_cli_path | default("gitlab") }}
-        {{ gitlab_fork_config_file_option }}
-        {{ gitlab_fork_section_option }}
-        -o yaml
-        project-fork create --project-id {{ gitlab_fork_target_project }}
+      uri:
+        url: >-
+          {{ gitlab_fork_api_url
+             + "/projects/"
+             + gitlab_fork_target_project
+             + "/fork" }}
+        method: POST
+        headers:
+          "Private-Token": "{{ gitlab_fork_token }}"
+        body_format: json
+        body:
+          name: testingfork7
+          path: testingfork7
+        return_content: yes
+        validate_certs: "{{ gitlab_fork_validate_certs }}"
+        status_code: 201
       when:
         gitlab_fork_allow_duplicated
         or (not gitlab_fork_allow_duplicated and not gitlab_fork_is_duplicated)
-      changed_when: gitlab_fork_result.stdout_lines | length > 0
-      failed_when: gitlab_fork_result.rc != 0
+      changed_when: gitlab_fork_result.json.forked_from_project is defined
       register: gitlab_fork_result
+
+    - name: Check project fork status
+      uri:
+        url: >-
+          {{ gitlab_fork_api_url
+             + "/projects/"
+             + gitlab_fork_result.json.id | string }}
+        method: GET
+        headers:
+          "Private-Token": "{{ gitlab_fork_token }}"
+        return_content: yes
+        validate_certs: "{{ gitlab_fork_validate_certs }}"
+        status_code: 200
+      when: gitlab_fork_result is changed
+      changed_when: no
+      register: gitlab_fork_check_result
+      until: gitlab_fork_check_result.json.import_status == "finished"
+      retries: "{{ gitlab_fork_check_retries }}"
+      delay: "{{ gitlab_fork_check_delay }}"
 
     - name: Setup fact with gitlab project fork info
       set_fact:
         gitlab_fork_fact: >-
-          {{ (not gitlab_fork_result is skipped)
-             | ternary(gitlab_fork_result.stdout | default("") | from_yaml,
+          {{ (not gitlab_fork_check_result is skipped)
+             | ternary(gitlab_fork_check_result.json | default({}),
                        gitlab_fork_search | first) }}
   vars:
-    gitlab_fork_user: >-
-      {{ gitlab_fork_user_result.stdout | from_yaml }}
+    gitlab_fork_api_url: >-
+      {{ gitlab_fork_server }}/api/v{{ gitlab_fork_cli_api_version }}
+
+    gitlab_fork_last_link: >-
+      {{ gitlab_fork_get_projects_pages_result.link.split("<")
+         | list
+         | select("search", "rel=.last.")
+         | list
+         | last }}
+
+    gitlab_fork_total_pages: >-
+      {{ gitlab_fork_last_link | regex_replace(".*&page=([0-9]+).*", "\1" ) }}
+
+    gitlab_fork_per_page: >-
+      {{ gitlab_fork_last_link | regex_replace(".*&per_page=([0-9]+).*", "\1" ) }}
+
+    gitlab_fork_user_projects: >-
+      {{ gitlab_fork_get_user_projects_result.results
+         | sum(attribute="json", start=[]) }}
 
     gitlab_fork_project_forks: >-
-      {{ gitlab_fork_get_user_projects_result.stdout
-         | from_yaml
+      {{ gitlab_fork_user_projects
          | selectattr("forked_from_project", "defined")
          | rejectattr("forked_from_project", "equalto", none)
          | list }}

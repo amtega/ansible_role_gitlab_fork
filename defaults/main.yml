@@ -1,6 +1,18 @@
 ---
 # Role default lower priority variables
 
+# Gitlab server uri
+
+gitlab_fork_server: https://gitlab.acme.com
+
+# Gitalb server API version tu use
+
+gitlab_fork_cli_api_version: 4
+
+# Gitlab token for user authentication
+
+gitlab_fork_token: mytoken
+
 # Path to the project to fork
 
 gitlab_fork_project_path:
@@ -9,3 +21,12 @@ gitlab_fork_project_path:
 # already exists
 
 gitlab_fork_allow_duplicated: no
+
+# Validate server certificates
+
+gitlab_fork_validate_certs: yes
+
+# Fork check retries and delay
+
+gitlab_fork_check_retries: 10
+gitlab_fork_check_delay: 3

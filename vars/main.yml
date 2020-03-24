@@ -1,16 +1,6 @@
 ---
 # Role variables
 
-# Variables that came from gitlab_cli role
-
-gitlab_fork_config_file_option: >-
-  {{ (gitlab_cli_config_file is defined)
-     | ternary("-c " + gitlab_cli_config_file | default(''), "") }}
-
-gitlab_fork_section_option: >-
-  {{ (gitlab_cli_section is defined)
-     | ternary("-g " + gitlab_cli_section | default(''), "") }}
-
 # Project to fork path with all necessary character transformations
 
 gitlab_fork_target_project: >-
