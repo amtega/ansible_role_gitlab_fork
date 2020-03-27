@@ -7,30 +7,30 @@
     - role: amtega.docker_presets
       vars:
         docker_presets_images_json_query: >-
-          [? starts_with(name, `centos-7`)
-             || starts_with(name, `fedora-29`)
-             || starts_with(name, `fedora-30`) ]
+          [? starts_with(name, `centos-7`)]
 
     - role: amtega.docker_sandbox
       vars:
         docker_sandbox_state: started
+        docker_sandbox_idempotence_test: no
   tags:
     - sandbox
 
-- name: Test gitlab_fork role
+- name: Test gitlab_fork role present state
   hosts: docker_sandbox_containers
   roles:
     - role: amtega.gitlab_fork
       vars:
-        gitlab_cli_api_url: "{{ gitlab_fork_test_gitlab_cli_api_url }}"
-        gitlab_cli_api_version: >-
-          {{ gitlab_fork_test_gitlab_cli_api_version | default(4) }}
-        gitlab_cli_login_token: "{{ gitlab_fork_test_gitlab_cli_token }}"
-        gitlab_cli_validate_certs: >-
-          {{ gitlab_fork_test_gitlab_cli_validate_certs | default(false) }}
-        gitlab_fork_project_path: "{{ gitlab_fork_test_project_path }}"
-        gitlab_fork_allow_duplicated: >-
-          {{ gitlab_fork_test_allow_duplicated | default(false) }}
+        gitlab_fork_state: present
+  tags:
+    - idempotence
+
+- name: Test gitlab_fork role absent state
+  hosts: docker_sandbox_containers
+  roles:
+    - role: amtega.gitlab_fork
+      vars:
+        gitlab_fork_state: absent
   tags:
     - idempotence
 
