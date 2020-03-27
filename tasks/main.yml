@@ -1,74 +1,14 @@
 ---
 # Role tasks
 
-- include_role:
-    name: amtega.check_platform
-  vars:
-    check_platform_distributions:
-      centos: 7
-      fedora: 29
-      rhel: 7
-
-- include_role:
-    name: amtega.gitlab_cli
-
 - block:
-    - name: Load user info from gitlab server
-      command: >-
-        {{ gitlab_cli_path | default("gitlab") }}
-        {{ gitlab_fork_config_file_option }}
-        {{ gitlab_fork_section_option }}
-        -o yaml current-user get
-      changed_when: false
-      register: gitlab_fork_user_result
+    - include_tasks: present.yml
+      when: gitlab_fork_state == "present"
 
-    - name: Load projects info from gitlab server
-      command: >-
-        {{ gitlab_cli_path | default("gitlab") }}
-        {{ gitlab_fork_config_file_option }}
-        {{ gitlab_fork_section_option }}
-        -o yaml project list --all --owned true
-      changed_when: false
-      register: gitlab_fork_get_user_projects_result
-
-    - name: Fork project in gitlab server
-      command: >-
-        {{ gitlab_cli_path | default("gitlab") }}
-        {{ gitlab_fork_config_file_option }}
-        {{ gitlab_fork_section_option }}
-        -o yaml
-        project-fork create --project-id {{ gitlab_fork_target_project }}
+    - include_tasks: absent.yml
       when:
-        gitlab_fork_allow_duplicated
-        or (not gitlab_fork_allow_duplicated and not gitlab_fork_is_duplicated)
-      changed_when: gitlab_fork_result.stdout_lines | length > 0
-      failed_when: gitlab_fork_result.rc != 0
-      register: gitlab_fork_result
-
-    - name: Setup fact with gitlab project fork info
-      set_fact:
-        gitlab_fork_fact: >-
-          {{ (not gitlab_fork_result is skipped)
-             | ternary(gitlab_fork_result.stdout | default("") | from_yaml,
-                       gitlab_fork_search | first) }}
-  vars:
-    gitlab_fork_user: >-
-      {{ gitlab_fork_user_result.stdout | from_yaml }}
-
-    gitlab_fork_project_forks: >-
-      {{ gitlab_fork_get_user_projects_result.stdout
-         | from_yaml
-         | selectattr("forked_from_project", "defined")
-         | rejectattr("forked_from_project", "equalto", none)
-         | list }}
-
-    gitlab_fork_search: >-
-      {{ gitlab_fork_project_forks
-         | selectattr("forked_from_project.path_with_namespace",
-                      "equalto",
-                      gitlab_fork_project_path)
-         | list }}
-
-    gitlab_fork_is_duplicated: "{{ gitlab_fork_search | length != 0 }}"
+        - gitlab_fork_state == "absent"
+        - gitlab_fork_name is defined
+        - gitlab_fork_match_list | length > 0
   tags:
     - role::gitlab_fork
