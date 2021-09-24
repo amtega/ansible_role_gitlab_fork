@@ -26,18 +26,22 @@ This is an example playbook:
 
 ## Testing
 
-Tests are based on docker containers. You can setup docker engine quickly using the playbook `files/setup.yml` available in the role [amtega.docker_engine](https://galaxy.ansible.com/amtega/docker_engine).
+Tests are based on [molecule with docker containers](https://molecule.readthedocs.io/en/latest/installation.html).
 
-To run test you need provide the variables defined in `defaults/main.yml`. One way to provide this information is calling the testing playbook passing an additional plus the default one provided for testing, as it's show in this example:
+To run test you need provide the variables defined in `defaults/main.yml`, so to run the tests you have to pass the following variables:
+
+- `ANSIBLE_INVENTORY`: path to an inventory providing the variables required by the role
+- `ANSIBLE_VAULT_PASSWORD_FILE`: path to the file containing the vault password required for the previous inventory (optional)
 
 ```shell
-$ cd amtega.gitlab_fork/tests
-$ ansible-playbook main.yml -i inventory -i ~/mycustominventory.yml --vault-id myvault@prompt
+cd amtega.gitlab_fork
+
+ANSIBLE_INVENTORY=~/myinventory ANSIBLE_VAULT_PASSWORD_FILE=~/myvaultpassword molecule test
 ```
 
 ## License
 
-Copyright (C) 2020 AMTEGA - Xunta de Galicia
+Copyright (C) 2021 AMTEGA - Xunta de Galicia
 
 This role is free software: you can redistribute it and/or modify it under the terms of:
 
