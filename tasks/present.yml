@@ -1,15 +1,15 @@
 ---
-# Role present state tasks
 
-- block:
+- name: Manage gitlab fork present state
+  block:
     - name: Generate random branch name
-      set_fact:
+      ansible.builtin.set_fact:
         git_fork_random_name: >-
           {{ 999999999999999999999999999999999999 | random | to_uuid }}
       when: gitlab_fork_name is not defined
 
     - name: Fork project
-      uri:
+      ansible.builtin.uri:
         url: >-
           {{ gitlab_fork_api_url
              + "/projects/"
@@ -35,7 +35,7 @@
       no_log: "{{ gitlab_fork_no_log | bool }}"
 
     - name: Check project fork status
-      uri:
+      ansible.builtin.uri:
         url: >-
           {{ gitlab_fork_api_url
              + "/projects/"
@@ -55,7 +55,7 @@
       no_log: "{{ gitlab_fork_no_log | bool }}"
 
     - name: Setup fact with gitlab project fork info
-      set_fact:
+      ansible.builtin.set_fact:
         gitlab_fork_fact: >-
           {{ (not gitlab_fork_check_result is skipped)
              | ternary(gitlab_fork_check_result.json | default({}),
