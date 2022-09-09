@@ -1,9 +1,9 @@
 ---
-# Role absent state tasks
 
-- block:
+- name: Manage gitlab fork absent state
+  block:
     - name: Remove project fork
-      uri:
+      ansible.builtin.uri:
         url: >-
           {{ gitlab_fork_api_url
              + "/projects/"
@@ -19,7 +19,7 @@
       no_log: "{{ gitlab_fork_no_log | bool }}"
 
     - name: Setup fact with gitlab project fork info
-      set_fact:
+      ansible.builtin.set_fact:
         gitlab_fork_fact: "{{ gitlab_fork_to_delete }}"
 
   vars:
