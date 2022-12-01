@@ -23,8 +23,9 @@ galaxy_info:
 dependencies:
   - role: amtega.gitlab_projects_fact
     vars:
-      gitlab_projects_fact_server: "{{ gitlab_fork_server }}"
-      gitlab_projects_fact_api_version: "{{ gitlab_fork_api_version }}"
-      gitlab_projects_fact_token: "{{ gitlab_fork_token }}"
+      gitlab_projects_fact_server: "{{ gitlab_merge_request_server }}"
+      gitlab_projects_fact_api_version: "{{ gitlab_merge_request_api_version }}"
+      gitlab_projects_fact_token: "{{ gitlab_merge_request_token }}"
       gitlab_projects_fact_owned: no
-      gitlab_projects_fact_validate_certs: "{{ gitlab_fork_validate_certs }}"
+      gitlab_projects_fact_validate_certs: >-
+        {{ gitlab_merge_request_validate_certs }}
